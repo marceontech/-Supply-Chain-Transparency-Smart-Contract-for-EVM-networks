@@ -1,0 +1,62 @@
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.0;  
+
+contract SupplyChain {
+    // Define a product structure
+    struct Product {
+        string name;
+        string manufacturer;
+        uint timestamp;
+        address currentHolder;
+        string status;
+    }
+
+    // State variables
+    mapping(uint => Product) public products;
+    uint public productCount;
+
+    // Events
+    event ProductAdded(uint productId, string name, string manufacturer, address indexed owner);
+    event StatusUpdated(uint productId, string newStatus, address indexed updatedBy);
+
+    // Add a new product
+    function addProduct(string memory _name, string memory _manufacturer) public {
+        productCount++;
+        products[productCount] = Product({
+            name: _name,
+            manufacturer: _manufacturer,
+            timestamp: block.timestamp,
+            currentHolder: msg.sender,
+            status: "Manufactured"
+        });
+
+        emit ProductAdded(productCount, _name, _manufacturer, msg.sender);
+    }
+
+    // Update the product status
+    function updateStatus(uint _productId, string memory _newStatus) public {
+        require(products[_productId].currentHolder == msg.sender, "Not authorized to update status");
+        products[_productId].status = _newStatus;
+
+        emit StatusUpdated(_productId, _newStatus, msg.sender);
+    }
+
+    // Transfer ownership of the product
+    function transferOwnership(uint _productId, address _newHolder) public {
+        require(products[_productId].currentHolder == msg.sender, "Not authorized to transfer ownership");
+        products[_productId].currentHolder = _newHolder;
+    }
+
+    // Fetch product details
+    function getProductDetails(uint _productId) public view returns (
+        string memory name,
+        string memory manufacturer,
+        uint timestamp,
+        address currentHolder,
+        string memory status
+    ) {
+        Product storage product = products[_productId];
+        return (product.name, product.manufacturer, product.timestamp, product.currentHolder, product.status);
+    }
+}
